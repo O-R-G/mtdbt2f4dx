@@ -1,0 +1,1 @@
+mtdbt2f-4d --steps 70 --exit 1000 --weight 5 200 --slant -.2 .2 --super .5 .8 --pen 0 .333 3 0 720

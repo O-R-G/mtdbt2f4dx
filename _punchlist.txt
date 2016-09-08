@@ -1,0 +1,139 @@
+== mtdbt2f-* ==
+
++ say buffer, [[slnc xxxx]] errors
++ do CLEANUP on startup and shutdown, make function
++ use exiting audio flag (just -f) (adjust help to reflect)
++ adjust -o flag to include full path
++ add audio in flag to avoid say, and use alternate aiff
++ add SPEEDUP flag to generate progressively faster speaking voice for bregenz
+x add mtdbt2f-4d generator
+* add render flag (build, export application, then run with java passing args)
+http://forum.processing.org/one/topic/get-command-line-parameter-in-the-new-world-of-processing-java.html
+* build / export app ?
+processing-java --sketch=/Users/reinfurt/Documents/Softwares/Processing/mtdbt2f4d\*/mtdbt2f4dx_v1 --output=/Users/reinfurt/Documents/Projects/META-THE-DIFFERENCE-BETWEEN-THE-2-FONT-\*/mtdbt2f\*/app --export
+then run it and pass command line args
+open /Users/reinfurt/Documents/Projects/META-THE-DIFFERENCE-BETWEEN-THE-2-FONT-\*/mtdbt2f\*/app/mtdbt2f4dx_v1.app/Contents/MacOS/mtdbt2f4dx_v1
+http://stackoverflow.com/questions/20749702/passing-command-line-inputs-to-processing-language-exported-application-applet
++ audio buffer / ffmpeg start_number hack fix (ongoing)
++ ffmpeg compression alternatives, audio and video 
++ add TEXTSPLIT
++ insert audio clip function
++ parse .txt file with tr / sed to add &'s and line returns
++ normalize audio levels (using sox --norm=-5 infile outfile)
++ add stereo
++ mtdbt2f4d (pendulum)
++ l/r stereo
+x record actions for rendering? (like mtdbt2f4d)
++ ffmpeg audio / video sync
++ fps [40] 50
++ blur
++ spin
+x ?,:/
+x point N,S,E,W?
++ scale
++ fix cleanup (still not working every time, particularly after forcequit)
++ fix rm FILE_OUT logic
+
+== mtdbt2fx ==
+
++ collect mtdbt2f-*,mtdbt2fx_v1 in directory (src)
++ git (meta-the-difference.com)
++ test bufferSize values
++ createMTDBT2F4D random range 
++ audio in from microphone
++ targa output
+- updateRangeMTDBT2F4D (midi)
++ VideoExport vs saveFrame *.tga, ffprobe diagnose PTS
++ use libfdk_aac for aac encoding (upgrade ffmpeg)
++ debug using ffmpeg commandline
++ 60 fps videoexport.saveFrame? 30 fps is best
++ debug frame counter, audio render
++ move fx to checkFx()
++ original file change to .wav from mtdbt2f-*
++ audioRecorder logic (one time thru records wav?)
++ startStopRender fix logic (audio)
++ in.wav record loop before frame output
+- write audio to named pipe and channel to ffmpeg
+  pipe works, use mkfifo to set up
+  minim wants it to have a .wav handle, but os still sees as pipe
+  no idea what speed the audio is writing to the pipe
+/ useAudioLinein / render logic
+
+** VideoExport **
+
++ compile VideoExport
+  javac -d . -classpath /Applications/Processing.app/Contents/Java/core.jar com/hamoid/VideoExport.java
+  jar -cf ../library/VideoExport.jar com
++ currently ProcessBuilder does not have correct arguments
++ framerate changed to 30
++ cleanup AudioInput, AudioRecorder, fft, amplitude logic
++ or join the files after the fact?
++ add audio to ffmpeg (out.wav)
+x soundflower to channel the playing audio to the input
++ outputVideo logic (put saveFrame in the correct conditional)
++ fix hardcoded on Desktop as audio src
+  this could be adjusted in the VideoExport contructor
++ save as .pde so local, not library
+- PGraphics?
+
+** ffmpeg ** 
+
++ ffmepg wants multilpes of 16 for width and height
++ ffmpeg -f avfoundation -list_devices true -i ""
++ ffmpeg -f avfoundation -i ":0" out.aiff
++ ffmpeg debug
++ in.aiff & audio/out.wav diff b/c out.wav recorded sync w/rendering
++ out/out.mp4 ~= data/aiff/in.aiff ~= video/out/out.mp4
++ debug w/ ffprobe
++ ffprobe out/out.mp4 2>&1 | grep -w "Duration"; 
+  ffprobe out/video/out.mp4 2>&1 | grep -w "Duration"; 
+  ffprobe out/audio/out.wav 2>&1 | grep -w "Duration"; 
+  ffprobe data/aiff/in.aiff 2>&1 | grep -w "Duration"
++ ffmpeg convert audio from .aiff -> .aac adds some duration
++ out.mp4 container > h264 video, aac audio 
++ solution seems to be to render audio async, but cued to frames
+x or send from minim to ffmpeg.write in VideoExport
+x manually write the audio data over a pipe? likely a better idea
++ or just simply write audio (in.aiff) as a -i in ffmpeg
+
+** minim **
+
++ AudioRecorder, output out.wav
+x soundflower
++ AudioInput
++ monitoring?
+/ linein monitoring switch logic
+- AudioRecorder ready?
+
+** fft **
+
+- good freq / good time res
+- better spectrum
+- logAverages
+- calcAverage
+- timeSize()?
+- fast fourier transform
+  http://code.compartmental.net/minim/fft_class_fft.html
+  fft converts a continuous to the frequencies that produce it
+  i.e., convert a signal to a spectrum
+  fft operates on a sample buffer whose size is the effective time resolution
+  fft has either good time or good freq resolution, but not both
+
+** fx_img **
+
++ fx_img
++ ding-img.aif triggers fx_img
++ for now, manually cp images to img dir
++ boolean inputImages (tmp fix)
+- add img dir to git
+- add -i, --image flag to mtdbt2f-* w/path to img folder
+- better, insert images directly in the script.txt
+- then cp * images to tmp/img
+
+** fx_img_speedflip (random?) **
+
+- todo, maybe plays randomly
+
+** fx_mov **
+
+- play movie file in background	

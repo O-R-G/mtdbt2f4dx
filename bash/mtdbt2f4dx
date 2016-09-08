@@ -1,0 +1,309 @@
+#!/bin/bash
+
+# init
+
+FILE_IN=""				# text file to read
+STD_IN=""				# using stdin flag
+AUDIO_IN="in.wav"		# audio file to use
+FILE_OUT="out/out.mp4"	# filename for mp4
+WORKINGDIR="$(pwd)"
+SOURCE="$(pwd)"			# points to dir with java [working directory]
+TMP="$(pwd)/data/tmp"	# where to make and store tmp files
+RATE=150				# speech rate, dynamically adjusted [150]
+SPEEDUP=0				# flag for speeding up the speech rate for bregenz
+TEXTSPLIT=10			# number of lines to split src txt file on [50]
+STEPS=0
+DEV=0					# usused, but will be when working raw not with compiled java
+QUIET=0					# 0 default, 1 dont -compile
+COUNTER=0
+CLEANUP=1				# rm * tmp files
+AUDIO=1					# process audio [0,1]
+VIDEO=1			        # process video [0,1]
+FPS=30					# for video render
+
+# welcome
+
+function welcome {
+echo -e "Welcome to Meta-the-Difference-Between-the-Two-Font-* \r"
+echo -e "Today is $(date) \r"
+echo -e "*\r"
+echo -e "Current working directory is $WORKINGDIR \r" 
+echo -e "$DATE" > log.txt
+echo ""
+echo " "
+echo "  /\      /\      /\ "
+echo " /  \    /  \    /  \ "
+echo "     \  /    \  /    \  / "
+echo "      \/      \/      \/ "
+echo " "
+echo " x = time, y = pressure"
+echo " wave = [-1 < y < 1]"
+echo " amplitude = abs(peak)"
+echo " level = root mean square"
+echo " pitch = f(wavelength)"
+echo " "
+}
+
+ 
+# parse command line options
+
+if [ $# -eq 0 ]; then
+	# if no arguments, then get stdin
+	welcome
+	echo "*"
+ 	read a		# get stdin, program halts until finished (variable must be 'a')  
+	echo "* Generating audio . . ."    
+	STD_IN="TRUE"
+else
+	welcome
+	echo "* Parsing arguments . . ."    
+	while [ "$1" != "" ]; do
+    	case $1 in
+        	-f | --file )           shift
+                                	FILE_IN=$1;;
+        	-s | --source )         shift
+                                	SOURCE=$1;;
+        	-a | --audio ) 	        shift
+                                	AUDIO_IN=$1;;
+        	-o | --out )            shift
+                                	FILE_OUT=$1;;
+        	-h | --help )           shift
+					echo -e "\
+	Usage: mtdbt2f-* [OPTION]... [FILE]...
+	Produce speaking, controllable mtdbt2f* asterisk from text file
+	
+  	-f, --file			FILE in text format (.txt)
+						without FILE, use existing audio
+  	-s, --source		SOURCE file in processing format (.pde)
+  	-a, --audio			AUDIO file in wav format (.wav)
+  	-o, --out			FILE in mp4 format (.mp4)
+  	-h, --help			show help
+	"
+					exit;;
+    	esac
+    	shift
+	done
+	echo "* Generating audio . . ."    
+fi
+
+
+# cleanup
+
+function cleanup {
+	if [ -d "$TMP" ]; 
+		then rm -rf $TMP
+	fi
+	if [ -d "run" ]; 
+		then rm -rf run 
+	fi
+	if [ -d "out/tga" ]; 
+		then rm -rf out/tga 
+	fi
+}
+
+if [ "$FILE_IN" != "" ]; then
+	cleanup
+fi
+
+
+# say
+
+# make the working directory point to the in.wav location *fix*
+# or the engine (java) may live in /usr/local/bin so always know where it is
+# using SOURCE now for that if nothing specified, then just run the sketch
+# add flag so that can dynamically feed new .wav to *? 
+# would run in a separate process and then mtdbt2f would update		
+# cerevoice bug, speech synth cmds after certain filelength
+# so added split on txt files and then join with ffmpeg 
+
+if [ "$STD_IN" != "" ]; then
+	say $a -o $SOURCE/data/audio/in.wav --progress
+else 
+	if [ "$FILE_IN" != "" ]; then
+
+		# process FILE_IN
+
+		
+mkdir $TMP
+		cp $FILE_IN $TMP/in.txt
+		FILE_IN=$TMP/in.txt
+		# sed -i '' 's/\(^.\)/\&\1/' $FILE_IN
+		# sed -i '' 's/\(^[^ ]\)/\&\1/' $FILE_IN
+		sed -i '' 's/\(^[^ ]\)/\&\1/' $FILE_IN
+		split -p '^&' -a 4 $FILE_IN $TMP/
+		if [ -f $FILE_IN ]; then
+			# cp $FILE_IN ~/Desktop/in.txt
+			rm $FILE_IN
+		fi
+
+		for FILENAME in $TMP/*; do
+			echo $FILENAME
+			
+			# rm &
+			sed -i '' 's/^&//' $FILENAME
+			
+			if X=`grep '/' $FILENAME`; then
+
+				echo file \'$X\' >> $TMP/_makefile
+			else				
+				if [ "$AUDIO" == "1" ]; then
+
+					# parse for voice name as (((name)))
+
+		            if Y=`grep '(((.*)))' $FILENAME`; then
+
+						VOICE=`cat $FILENAME | sed -n 's/^.(*\(.*\)))).*/\1/p'`
+						echo $VOICE
+						sed -i '' 's/^(((.*)))//' $FILENAME
+						say -v "$VOICE" -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+					else 
+
+						say -v 'CereVoice Isla' -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+						# say -v 'Markus' -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+						# say -v 'CereVoice Heather' -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+						# say -v 'Paulina' -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+						# say -v 'Alex' -f $FILENAME -o $TMP/out-$COUNTER.aiff --progress -r $RATE
+					fi
+
+					# process voice, reduce gain, add bass
+
+	                if [ "$VOICE" != "Cerevoice Isla" ]; then
+
+						sox $TMP/out-$COUNTER.aiff $TMP/reduced-$COUNTER.aiff gain -10
+						mv $TMP/reduced-$COUNTER.aiff $TMP/out-$COUNTER.aiff
+					
+					else
+
+						sox $TMP/out-$COUNTER.aiff $TMP/reduced-$COUNTER.aiff bass 20 reverb 10 gain 10
+						mv $TMP/reduced-$COUNTER.aiff $TMP/out-$COUNTER.aiff
+					fi
+
+					# mono to stereo plus compression expansion
+					# and to 16k for german voice (tmp)
+ 
+					# sox $TMP/out-$COUNTER.aiff -c 2 $TMP/in-$COUNTER.aiff reverb 10 compand 0.3,1.0 6:-70,-60,-20 -16 -90 0.2
+					# sox $TMP/out-$COUNTER.aiff -c 2 $TMP/in-$COUNTER.aiff reverb 10 lowpass 5000
+					# sox $TMP/out-$COUNTER.aiff -c 2 $TMP/in-$COUNTER.aiff
+					# sox $TMP/out-$COUNTER.aiff -c 2 $TMP/in-$COUNTER.aiff lowpass 5000
+					# sox $TMP/out-$COUNTER.aiff -r 16000 -c 2 $TMP/in-$COUNTER.aiff lowpass 5000
+					sox $TMP/out-$COUNTER.aiff -r 16000 -c 2 $TMP/in-$COUNTER.aiff
+					
+					# for paulina
+					# sox $TMP/out-$COUNTER.aiff -r 16000 -c 2 $TMP/in-$COUNTER.aiff bass -20 vol .5
+					rm $TMP/out-$COUNTER.aiff
+					
+					if [ "$SPEEDUP" == "1" ]; then
+						let ADJUST=$(($COUNTER * 50))
+               			let RATE=$RATE+$ADJUST
+					fi
+				
+				fi
+
+				echo file \'$TMP/in-$COUNTER.aiff\' >> $TMP/_makefile
+				let COUNTER=COUNTER+1
+				echo COUNTER = $COUNTER
+			fi
+		done
+
+		# parse / output _timeline
+
+		AUDIOTIME=0.000000
+		cat $TMP/_makefile | grep -o "[\'].*[\']" | tr -d "'" >> $TMP/_processfile
+
+		while read -r AUDIOFILEPATH; do
+      
+			echo $AUDIOTIME' '$AUDIOFILEPATH >> $TMP/_timeline
+			AUDIOTIME=$(echo "$AUDIOTIME + (`soxi -D $AUDIOFILEPATH` * 1000)" | bc -l)
+		done < $TMP/_processfile
+
+		# output _fx
+
+		grep "rewind-pan.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_spin
+		grep "rewind-pan-reverse.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_spin_reverse
+		grep "howl" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_blur
+		grep "blur-fade" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_blur_fade
+		grep "north" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_north
+		grep "south" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_south
+		grep "east" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_east
+		grep "west" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_west
+		grep "outside" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_scale_in
+		grep "sync-reverse-in" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_scale_in
+		grep "sync-reverse-out" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_scale_out
+		grep "black.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_black
+		grep "ding-img.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_img
+		grep "order3d.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_order3d
+		grep "jaron-lanier-post-symbolic.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_shapeshift
+		grep "cometogether.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_cometogether
+		grep "parallel-1.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_parallel_1
+		grep "parallel-2.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_parallel_2
+		grep "parallel-3.aif" $TMP/_timeline | sed "s/ \/Users.*//" >> $TMP/_fx_parallel_3
+
+		# cp $TMP/_timeline* ~/Desktop/
+		# cp $TMP/_fx* ~/Desktop/
+
+		# join
+
+		if [ -f data/audio/in.wav ]; then
+			rm data/audio/in.wav
+		fi
+		if [ "$AUDIO" == "1" ]; then
+			ffmpeg -f concat -i $TMP/_makefile -c copy $TMP/concat.aiff
+ 			ffmpeg -y -i $TMP/concat.aiff data/audio/in.wav
+		fi
+	else
+		if [ "$AUDIO_IN" != "" ]; then
+
+			cp $AUDIO_IN data/audio/in.wav
+			echo "* Using existing $AUDIO_IN"
+		else
+			echo "* Using existing $AUDIO_IN"
+		fi
+	fi
+fi
+
+
+# processing-java
+
+# dev mode
+# deploy mode will use a compiled app exported from processing
+# and just call the MacOS launch file
+# for now, in dev uses raw processing files, but could compile on the fly
+# includes --force flag to delete run folder
+# probably better to simply compile into exported app and then use that 
+
+mkdir run
+processing-java --sketch=$SOURCE --output=$SOURCE/run --force --run
+
+if [ "$VIDEO" == "1" ]; then
+
+	if [ -d "$SOURCE/out/tga" ]; then
+
+		echo "** using tga **"
+
+		# mp4 h264 encoding
+		ffmpeg -r $FPS -start_number 0001 -i out/tga/out-%04d.tga -itsoffset 0.06400 -i data/audio/in.wav -c:v libx264 -r $FPS -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
+
+	else 
+
+		echo "** using videeexport **"
+
+		# ffmpeg -r $FPS -i out/video/out.mp4 -i data/audio/in.wav -c:v libx264 -r $FPS -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
+		# ffmpeg -i out/video/out.mp4 -i data/audio/in.wav -c:v libx264 -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
+ 	fi
+
+	open $FILE_OUT
+fi
+
+# cleanup
+  
+if [ "$CLEANUP" != "0" ]; then
+	cleanup
+fi
+
+
+# exit
+
+echo -e "** mtdbt2f-* ok ** \r"
+echo -e "Bye."
+
+# end

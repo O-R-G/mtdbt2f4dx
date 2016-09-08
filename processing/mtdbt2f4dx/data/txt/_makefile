@@ -1,0 +1,3 @@
+mtdbt2f-* -f data/txt/Ayache.txt -o Ayache; mtdbt2f-* -f data/txt/Bracewell.txt -o Bracewell; mtdbt2f-* -f data/txt/Davis.txt -o Davis; mtdbt2f-* -f data/txt/Diner.txt -o Diner; mtdbt2f-* -f data/txt/Gephart.txt -o Gephart; mtdbt2f-* -f data/txt/Harris.txt -o Harris; mtdbt2f-* -f data/txt/Mulroney.txt -o Mulroney; mtdbt2f-* -f data/txt/Scanlan.txt -o Scanlan; mtdbt2f-* -f data/txt/Svenonius.txt -o Svenonius
+
+
