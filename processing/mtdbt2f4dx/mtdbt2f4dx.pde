@@ -38,6 +38,7 @@ PFont display;    // for hollows display
 // options 
 
 boolean debug = false;
+boolean useMidi = true; // continue without MIDI when no device is available
 
 // settings
 
@@ -199,7 +200,16 @@ void setup() {
   if (debug) { 
     MidiBus.list();
   }
-  myBus = new MidiBus(this, 0, 0); 
+  if (useMidi) {
+    try {
+      myBus = new MidiBus(this, 0, 0);
+    }
+    catch (Exception e) {
+      println("** MIDI unavailable; continuing without MIDI **");
+      myBus = null;
+      useMidi = false;
+    }
+  }
 
   // videoExport
 
@@ -233,24 +243,24 @@ void setup() {
   // only do this if not using existing audio file
 
   if (fx) {
-    fx_spin = loadStrings(tmpdir + "/_fx_spin");
-    fx_spin_reverse = loadStrings(tmpdir + "/_fx_spin_reverse");
-    fx_blur = loadStrings(tmpdir + "/_fx_blur");
-    fx_blur_fade = loadStrings(tmpdir + "/_fx_blur_fade");
-    fx_north = loadStrings(tmpdir + "/_fx_north");
-    fx_south = loadStrings(tmpdir + "/_fx_south");
-    fx_east = loadStrings(tmpdir + "/_fx_east");
-    fx_west = loadStrings(tmpdir + "/_fx_west");
-    fx_scale_in = loadStrings(tmpdir + "/_fx_scale_in");
-    fx_scale_out = loadStrings(tmpdir + "/_fx_scale_out");
-    fx_black = loadStrings(tmpdir + "/_fx_black");
-    fx_img = loadStrings(tmpdir + "/_fx_img");
-    fx_order3d = loadStrings(tmpdir + "/_fx_order3d");
-    fx_shapeshift = loadStrings(tmpdir + "/_fx_shapeshift");
-    fx_cometogether = loadStrings(tmpdir + "/_fx_cometogether");
-    fx_parallel_1 = loadStrings(tmpdir + "/_fx_parallel_1");
-    fx_parallel_2 = loadStrings(tmpdir + "/_fx_parallel_2");
-    fx_parallel_3 = loadStrings(tmpdir + "/_fx_parallel_3");
+    fx_spin = loadOptionalStrings(tmpdir + "/_fx_spin");
+    fx_spin_reverse = loadOptionalStrings(tmpdir + "/_fx_spin_reverse");
+    fx_blur = loadOptionalStrings(tmpdir + "/_fx_blur");
+    fx_blur_fade = loadOptionalStrings(tmpdir + "/_fx_blur_fade");
+    fx_north = loadOptionalStrings(tmpdir + "/_fx_north");
+    fx_south = loadOptionalStrings(tmpdir + "/_fx_south");
+    fx_east = loadOptionalStrings(tmpdir + "/_fx_east");
+    fx_west = loadOptionalStrings(tmpdir + "/_fx_west");
+    fx_scale_in = loadOptionalStrings(tmpdir + "/_fx_scale_in");
+    fx_scale_out = loadOptionalStrings(tmpdir + "/_fx_scale_out");
+    fx_black = loadOptionalStrings(tmpdir + "/_fx_black");
+    fx_img = loadOptionalStrings(tmpdir + "/_fx_img");
+    fx_order3d = loadOptionalStrings(tmpdir + "/_fx_order3d");
+    fx_shapeshift = loadOptionalStrings(tmpdir + "/_fx_shapeshift");
+    fx_cometogether = loadOptionalStrings(tmpdir + "/_fx_cometogether");
+    fx_parallel_1 = loadOptionalStrings(tmpdir + "/_fx_parallel_1");
+    fx_parallel_2 = loadOptionalStrings(tmpdir + "/_fx_parallel_2");
+    fx_parallel_3 = loadOptionalStrings(tmpdir + "/_fx_parallel_3");
   }
 
   // display font
@@ -270,6 +280,14 @@ void setup() {
       println("loadImage : " + imgStub);
     }
   }
+}
+
+String[] loadOptionalStrings(String filename) {
+  File file = new File(dataPath(filename));
+  if (!file.isFile()) {
+    return new String[0];
+  }
+  return loadStrings(filename);
 }
 
 void draw() { 
@@ -1167,4 +1185,3 @@ void stop() {
   super.stop();
   exit();
 }
-
