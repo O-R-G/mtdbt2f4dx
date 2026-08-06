@@ -1,33 +1,36 @@
 # mtdbt2f4dx
 
-Meta-the-Difference-Between-the-Two-Font-* is a Processing audiovisual work that animates an asterisk through a sequence of fonts in response to sound.
+Meta-the-Difference-Between-the-Two-Font-* is a p5.js audiovisual work that animates an asterisk through a sequence of fonts in response to sound.
 
 ## Requirements
 
-- Processing 4 with Java mode
-- Minim
-- The MidiBus (optional at runtime)
+- Node.js 20 or newer
+- A modern browser (Web MIDI is optional)
 - FFmpeg and SoX for the production scripts
 
 ## Run
 
-Place a 16 kHz stereo WAV file at:
-
-```text
-processing/mtdbt2f4dx/data/audio/in.wav
-```
-
-Then run the sketch from Processing, or from the repository root:
+Install and run:
 
 ```sh
-processing-java --sketch="$PWD/processing/mtdbt2f4dx" --output=/tmp/mtdbt2f4dx --force --run
+npm install
+npm start
+```
+
+Open `http://localhost:8080`. The default WAV lives at
+`p5js/data/audio/in.wav`; you can also drop an audio file onto the canvas.
+
+The Bash production workflow remains available:
+
+```sh
+./bash/mtdbt2f4dx --audio path/to/input.wav
 ```
 
 MIDI devices and effect timeline files are optional.
 
 ## FX timelines
 
-Effects are synchronized to audio with files in `processing/mtdbt2f4dx/data/tmp`. Each file contains one start time in milliseconds per line:
+Effects are synchronized to audio with files in `p5js/data/tmp`. Each file contains one start time in milliseconds per line:
 
 ```text
 1200
@@ -40,7 +43,7 @@ The `bash/mtdbt2f4dx` production script can generate these timelines from the po
 
 ## MIDI
 
-The sketch uses the first available MIDI input and output. Its control-change mappings are:
+The sketch listens to available Web MIDI inputs. Its control-change mappings are:
 
 - CC 1 — opacity
 - CC 3 — audio sensitivity
@@ -56,6 +59,15 @@ If MIDI initialization fails, the sketch continues without it.
 - `space` — play/pause
 - `tab` — rewind
 - `,` / `.` — seek backward/forward
-- `f` — toggle FFT response
+- `f` — toggle between volume response (default) and FFT response
 - `d` — toggle diagnostics
-- `r` — start/stop rendering
+- `r` — start/stop an MP4 recording with audio (WebM fallback when MP4 encoding is unavailable)
+
+## Tests
+
+```sh
+npm test
+```
+
+Tests cover timeline parsing, seeking and font traversal, JavaScript syntax,
+and a server/asset smoke test.

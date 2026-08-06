@@ -1,0 +1,11 @@
+{
+  "name": "mtdbt2f4dx",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "node scripts/generate-font-manifest.mjs",
+    "start": "node scripts/generate-font-manifest.mjs && node scripts/serve.mjs",
+    "test": "node --test && node --check p5js/sketch.js && node scripts/smoke.mjs"
+  },
+  "dependencies": { "p5": "^1.11.10" }
+}

@@ -7,13 +7,14 @@ STD_IN=""				# using stdin flag
 AUDIO_IN="in.wav"		# audio file to use
 FILE_OUT="out/out.mp4"	# filename for mp4
 WORKINGDIR="$(pwd)"
-SOURCE="$(pwd)"			# points to dir with java [working directory]
-TMP="$(pwd)/data/tmp"	# where to make and store tmp files
+REPOROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SOURCE="$REPOROOT/p5js"		# p5.js sketch directory
+TMP="$SOURCE/data/tmp"	# where to make and store tmp files
 RATE=150				# speech rate, dynamically adjusted [150]
 SPEEDUP=0				# flag for speeding up the speech rate for bregenz
 TEXTSPLIT=10			# number of lines to split src txt file on [50]
 STEPS=0
-DEV=0					# usused, but will be when working raw not with compiled java
+DEV=0					# reserved development flag
 QUIET=0					# 0 default, 1 dont -compile
 COUNTER=0
 CLEANUP=1				# rm * tmp files
@@ -74,7 +75,7 @@ else
 	
   	-f, --file			FILE in text format (.txt)
 						without FILE, use existing audio
-  	-s, --source		SOURCE file in processing format (.pde)
+  	-s, --source		SOURCE p5.js sketch directory
   	-a, --audio			AUDIO file in wav format (.wav)
   	-o, --out			FILE in mp4 format (.mp4)
   	-h, --help			show help
@@ -86,6 +87,9 @@ else
 	echo "* Generating audio . . ."    
 fi
 
+# --source may override the default sketch directory.
+TMP="$SOURCE/data/tmp"
+
 
 # cleanup
 
@@ -93,12 +97,7 @@ function cleanup {
 	if [ -d "$TMP" ]; 
 		then rm -rf $TMP
 	fi
-	if [ -d "run" ]; 
-		then rm -rf run 
-	fi
-	if [ -d "out/tga" ]; 
-		then rm -rf out/tga 
-	fi
+	if [ -d "$SOURCE/out/tga" ]; then rm -rf "$SOURCE/out/tga"; fi
 }
 
 if [ "$FILE_IN" != "" ]; then
@@ -109,8 +108,7 @@ fi
 # say
 
 # make the working directory point to the in.wav location *fix*
-# or the engine (java) may live in /usr/local/bin so always know where it is
-# using SOURCE now for that if nothing specified, then just run the sketch
+# SOURCE keeps generated audio beside the browser sketch regardless of cwd.
 # add flag so that can dynamically feed new .wav to *? 
 # would run in a separate process and then mtdbt2f would update		
 # cerevoice bug, speech synth cmds after certain filelength
@@ -243,17 +241,17 @@ mkdir $TMP
 
 		# join
 
-		if [ -f data/audio/in.wav ]; then
-			rm data/audio/in.wav
+		if [ -f "$SOURCE/data/audio/in.wav" ]; then
+			rm "$SOURCE/data/audio/in.wav"
 		fi
 		if [ "$AUDIO" == "1" ]; then
 			ffmpeg -f concat -i $TMP/_makefile -c copy $TMP/concat.aiff
- 			ffmpeg -y -i $TMP/concat.aiff data/audio/in.wav
+			ffmpeg -y -i $TMP/concat.aiff "$SOURCE/data/audio/in.wav"
 		fi
 	else
 		if [ "$AUDIO_IN" != "" ]; then
 
-			cp $AUDIO_IN data/audio/in.wav
+			cp "$AUDIO_IN" "$SOURCE/data/audio/in.wav"
 			echo "* Using existing $AUDIO_IN"
 		else
 			echo "* Using existing $AUDIO_IN"
@@ -262,37 +260,14 @@ mkdir $TMP
 fi
 
 
-# processing-java
-
-# dev mode
-# deploy mode will use a compiled app exported from processing
-# and just call the MacOS launch file
-# for now, in dev uses raw processing files, but could compile on the fly
-# includes --force flag to delete run folder
-# probably better to simply compile into exported app and then use that 
-
-mkdir run
-processing-java --sketch=$SOURCE --output=$SOURCE/run --force --run
-
-if [ "$VIDEO" == "1" ]; then
-
-	if [ -d "$SOURCE/out/tga" ]; then
-
-		echo "** using tga **"
-
-		# mp4 h264 encoding
-		ffmpeg -r $FPS -start_number 0001 -i out/tga/out-%04d.tga -itsoffset 0.06400 -i data/audio/in.wav -c:v libx264 -r $FPS -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
-
-	else 
-
-		echo "** using videeexport **"
-
-		# ffmpeg -r $FPS -i out/video/out.mp4 -i data/audio/in.wav -c:v libx264 -r $FPS -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
-		# ffmpeg -i out/video/out.mp4 -i data/audio/in.wav -c:v libx264 -pix_fmt yuv420p -b 5000k -c:a aac -strict experimental -b:a 192k $FILE_OUT
- 	fi
-
-	open $FILE_OUT
-fi
+# p5.js development server. Press r in the sketch to record a WebM.
+echo "* Starting p5.js at http://localhost:8080"
+(cd "$REPOROOT" && npm start) &
+SERVER_PID=$!
+trap 'kill "$SERVER_PID" 2>/dev/null' EXIT INT TERM
+sleep 1
+open http://localhost:8080
+wait "$SERVER_PID"
 
 # cleanup
   
