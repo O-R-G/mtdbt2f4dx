@@ -41,7 +41,8 @@ local server.
 ## Audio response
 
 Volume response is enabled by default. The audio level maps the asterisk from
-1× to 5× scale. Press `f` to use FFT response instead.
+1× to 5× scale. Sensitivity defaults to 0.75× and can be adjusted from
+0.25× to 4× in 0.25× steps. Press `f` to use FFT response instead.
 
 ## Input audio
 
@@ -124,6 +125,8 @@ If MIDI initialization fails, the sketch continues without it.
 - `tab` — rewind
 - `,` / `.` — seek backward/forward
 - `<` / `>` — seek backward/forward five seconds
+- `=` / `+` — increase volume sensitivity
+- `-` / `_` — decrease volume sensitivity
 - `f` — toggle between volume response (default) and FFT response
 - `d` — toggle diagnostics
 - `s` — toggle the spectrum while diagnostics are visible

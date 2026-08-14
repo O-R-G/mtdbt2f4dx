@@ -115,6 +115,8 @@ window.keyPressed = function () {
   else if (keyCode === TAB) { state.sound.stop(); state.sound.play(); state.started = true; }
   else if (key === ',' || key === '<') seek(key === '<' ? -5000 : -1000);
   else if (key === '.' || key === '>') seek(key === '>' ? 5000 : 1000);
+  else if (key === '=' || key === '+') adjustSensitivity(0.25);
+  else if (key === '-' || key === '_') adjustSensitivity(-0.25);
   else if (key === 'f') state.useFFT = !state.useFFT;
   else if (key === 'd') state.diagnostics = !state.diagnostics;
   else if (key === 's' && state.diagnostics) state.spectrum = !state.spectrum;
@@ -130,10 +132,14 @@ function toggleAudio() {
   state.started = true; setStatus(state.sound.isPlaying() ? 'Playing' : 'Paused');
 }
 function seek(delta) { state.sound.jump(seekSeconds(state.sound.currentTime(), delta, state.sound.duration())); }
+function adjustSensitivity(delta) {
+  state.levelAdjust = clamp(state.levelAdjust + delta, 0.25, 4);
+  setStatus(`Volume sensitivity ${state.levelAdjust.toFixed(2)}\u00d7`);
+}
 
 function drawDiagnostics(position, energy, level) {
   push(); resetMatrix(); drawDiagnosticGrid(); fill(255, 0, 0); noStroke(); textFont('monospace'); textSize(10); textAlign(LEFT, TOP);
-  text(`${frameRate().toFixed(0)} fps > ${state.font}.ttf / ${position.toFixed(0)} ms\nlevel ${level.toFixed(3)} / fft ${energy.toFixed(0)} / ${state.useFFT ? 'FFT' : 'volume'}`, 10, 10);
+  text(`${frameRate().toFixed(0)} fps > ${state.font}.ttf / ${position.toFixed(0)} ms\nlevel ${level.toFixed(3)} / sensitivity ${state.levelAdjust.toFixed(2)}\u00d7 / fft ${energy.toFixed(0)} / ${state.useFFT ? 'FFT' : 'volume'}`, 10, 10);
   if (state.spectrum) { const spectrum = state.fft.analyze(); stroke(255,0,0); spectrum.forEach((v,i) => line(i*width/spectrum.length, 90, i*width/spectrum.length, 90-v/3)); }
   pop();
 }
