@@ -43,6 +43,29 @@ local server.
 Volume response is enabled by default. The audio level maps the asterisk from
 1× to 5× scale. Press `f` to use FFT response instead.
 
+## Input audio
+
+The default input file is `p5js/data/audio/in.wav`. It should be an
+uncompressed WAV with these specifications:
+
+- 16,000 Hz sample rate
+- 16-bit signed little-endian PCM (`pcm_s16le`)
+- Stereo (2 channels)
+
+Convert an MP3 or other FFmpeg-supported audio file with:
+
+```sh
+ffmpeg -i path/to/input.mp3 -ar 16000 -ac 2 -c:a pcm_s16le p5js/data/audio/in.wav
+```
+
+This replaces the existing `in.wav`. You can verify the result with:
+
+```sh
+ffprobe -v error \
+  -show_entries stream=codec_name,sample_rate,channels,bits_per_sample \
+  -of default=noprint_wrappers=1 p5js/data/audio/in.wav
+```
+
 ## Recording
 
 Press `r` to start and stop recording. The download includes canvas video and
