@@ -31,6 +31,14 @@ export function combineRecordingStreams(canvasStream, audioStream, MediaStreamCl
   ]);
 }
 
+export const RECORDING_TIMESLICE_MS = 1000;
+
+export function startRecording(recorder) {
+  // Periodically flush encoded data so long recordings do not leave the
+  // browser holding the entire video in its encoder buffer until stop().
+  recorder.start(RECORDING_TIMESLICE_MS);
+}
+
 export function nextFont(index, direction, start, end) {
   const candidate = index + direction;
   return candidate >= start && candidate <= end

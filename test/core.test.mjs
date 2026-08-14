@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { activeAt, audioScale, combineRecordingStreams, fftScale, nextFont, parseTimeline, recordingFormat, seekSeconds } from '../p5js/core.mjs';
+import { RECORDING_TIMESLICE_MS, activeAt, audioScale, combineRecordingStreams, fftScale, nextFont, parseTimeline, recordingFormat, seekSeconds, startRecording } from '../p5js/core.mjs';
 test('timelines accept numeric lines and ignore blanks', () => assert.deepEqual(parseTimeline('1200\n\n8450\n'), [1200, 8450]));
 test('effects include their boundaries', () => { assert.equal(activeAt(100,100,20), true); assert.equal(activeAt(121,100,20), false); });
 test('font traversal reverses at range ends', () => assert.deepEqual(nextFont(3,1,0,3), {index:2,direction:-1}));
@@ -29,4 +29,10 @@ test('recording stream combines canvas video with sound audio', () => {
   const sound = new MockMediaStream([{ kind: 'audio', id: 'sound' }]);
   const combined = combineRecordingStreams(canvas, sound, MockMediaStream);
   assert.deepEqual(combined.tracks.map(track => track.kind), ['video', 'audio']);
+});
+test('recording periodically flushes encoded data during long captures', () => {
+  const calls = [];
+  startRecording({ start: timeslice => calls.push(timeslice) });
+  assert.deepEqual(calls, [RECORDING_TIMESLICE_MS]);
+  assert.equal(RECORDING_TIMESLICE_MS, 1000);
 });

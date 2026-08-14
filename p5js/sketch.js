@@ -1,4 +1,4 @@
-import { FX_SPECS, activeAt, audioScale, clamp, combineRecordingStreams, fftScale, lerpRange, nextFont, parseTimeline, recordingFormat, seekSeconds } from './core.mjs';
+import { FX_SPECS, activeAt, audioScale, clamp, combineRecordingStreams, fftScale, lerpRange, nextFont, parseTimeline, recordingFormat, seekSeconds, startRecording } from './core.mjs';
 
 const FONT_ROOT = 'data/fonts/mtdbt2f4d-3';
 const state = {
@@ -179,7 +179,7 @@ function toggleRecording() {
   const options = format.mimeType ? { mimeType: format.mimeType } : undefined;
   const recorder = new MediaRecorder(stream, options);
   state.recording = { recorder, audioDestination, stream };
-  recorder.ondataavailable = event => chunks.push(event.data);
+  recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
   recorder.onstop = () => {
     p5.soundOut.output.disconnect(audioDestination);
     stream.getTracks().forEach(track => track.stop());
@@ -188,7 +188,7 @@ function toggleRecording() {
     a.download = `mtdbt2f4d.${format.extension}`;
     a.click(); state.recording = null; setStatus(`Recording saved as ${format.extension.toUpperCase()} with audio.`);
   };
-  recorder.start(); setStatus(`Recording ${format.extension.toUpperCase()}; press r to save.`);
+  startRecording(recorder); setStatus(`Recording ${format.extension.toUpperCase()}; press r to save.`);
 }
 
 async function initMIDI() {
