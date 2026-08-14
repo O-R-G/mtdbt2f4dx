@@ -132,10 +132,33 @@ function toggleAudio() {
 function seek(delta) { state.sound.jump(seekSeconds(state.sound.currentTime(), delta, state.sound.duration())); }
 
 function drawDiagnostics(position, energy, level) {
-  push(); resetMatrix(); fill(255, 0, 0); textFont('monospace'); textSize(10); textAlign(LEFT, TOP);
+  push(); resetMatrix(); drawDiagnosticGrid(); fill(255, 0, 0); noStroke(); textFont('monospace'); textSize(10); textAlign(LEFT, TOP);
   text(`${frameRate().toFixed(0)} fps > ${state.font}.ttf / ${position.toFixed(0)} ms\nlevel ${level.toFixed(3)} / fft ${energy.toFixed(0)} / ${state.useFFT ? 'FFT' : 'volume'}`, 10, 10);
   if (state.spectrum) { const spectrum = state.fft.analyze(); stroke(255,0,0); spectrum.forEach((v,i) => line(i*width/spectrum.length, 90, i*width/spectrum.length, 90-v/3)); }
   pop();
+}
+function drawDiagnosticGrid() {
+  const tick = 6;
+  stroke(0, 255, 255); fill(0, 255, 255); strokeWeight(1);
+  textFont('monospace'); textSize(10);
+  line(0, height / 2, width, height / 2);
+  line(width / 2, 0, width / 2, height);
+  textAlign(CENTER, TOP);
+  for (let x = 0; x <= width / 2; x += width / 10) {
+    for (const direction of [-1, 1]) {
+      const screenX = width / 2 + x * direction;
+      line(screenX, height / 2 - tick, screenX, height / 2 + tick);
+      if (x || direction === 1) text(x.toFixed(0), screenX, height / 2 + tick + 2);
+    }
+  }
+  textAlign(LEFT, CENTER);
+  for (let y = 0; y <= height / 2; y += height / 10) {
+    for (const direction of [-1, 1]) {
+      const screenY = height / 2 + y * direction;
+      line(width / 2 - tick, screenY, width / 2 + tick, screenY);
+      if (y || direction === 1) text(y.toFixed(0), width / 2 + tick + 2, screenY);
+    }
+  }
 }
 function drawMessage(message) { fill(255); textAlign(CENTER); text(message, width/2, height/2); }
 function setStatus(message) { document.querySelector('#status').textContent = message; }
